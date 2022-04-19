@@ -1,0 +1,2 @@
+- how to calc ting count of an split way
+- how to enumerate yaku functions with names or id
