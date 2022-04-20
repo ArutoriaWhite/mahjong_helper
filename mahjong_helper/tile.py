@@ -1,4 +1,5 @@
 import collections
+from email.policy import default
 #tiles classes En naming reference to https://github.com/Camerash/mahjong-dataset
 #aka dora example: dots-8-r
 #normal example: dots-8-n
@@ -12,23 +13,25 @@ class TilesAndCond:
             eye in last
             shun is sorted
         """
-        self.free_tiles: list[str]
-        self.group_tiles: list[TileGroup] #eye in last
-        self.ting_count: int
-        self.is_tsumo: bool
-        self.chang_fong: str
-        self.zi_fong: str
-        self.doras: collections.defaultdict[str,int] #which dora, count
-        self.is_riichi: bool
-        self.is_double_riichi: bool
-        self.is_ippatsu: bool
-        self.is_chiang_gang: bool
-        self.is_ling_shang_kai_hua: bool
-        self.is_hai_di_lao_yue: bool
-        self.is_he_di_lao_yu: bool
-        self.is_tian_hu: bool
-        self.is_di_hu: bool
-        self.is_qin: bool
+        self.free_tiles: list[str] = []
+        self.group_tiles: list[TileGroup]  = []     #eye in last
+        self.ting_count: int = 0
+        self.is_tsumo: bool = False
+        self.chang_fong: str = ''
+        self.zi_fong: str = ''      # 'west'
+        self.doras: collections.defaultdict[str,int] = collections.defaultdict(int)      #which dora, count
+        self.is_riichi: bool = False
+        self.is_double_riichi: bool = False
+        self.is_ippatsu: bool = False
+        self.is_chiang_gang: bool = False
+        self.is_ling_shang_kai_hua: bool = False
+        self.is_hai_di_lao_yue: bool = False
+        self.is_he_di_lao_yu: bool = False
+        self.is_tian_hu: bool = False
+        self.is_di_hu: bool = False
+        self.is_qin: bool = False
+        self.free_ting: int = 0
+        self.group_ting: int = 0
 
     @property
     def is_men_qing (self) -> bool:

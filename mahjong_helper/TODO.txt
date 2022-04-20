@@ -1,2 +1,7 @@
 - how to calc ting count of an split way
 - how to enumerate yaku functions with names or id
+
+13 tile + last tile
+13 tile
+
+enum eye
