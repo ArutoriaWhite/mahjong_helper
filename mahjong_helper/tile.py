@@ -15,6 +15,7 @@ class TilesAndCond:
         """
         self.free_tiles: list[str] = []
         self.group_tiles: list[TileGroup]  = []     #eye in last
+        self.last_tile: str = ''
         self.ting_count: int = 0
         self.is_tsumo: bool = False
         self.chang_fong: str = ''
@@ -57,4 +58,10 @@ class TilesAndCond:
         res = self.free_tiles[:]
         for gg in [g.tiles for g in self.group_tiles]:
             res += gg
+        return res
+    
+    @property
+    def unfull_tiles(self) -> list[str]:
+        res = self.all_tiles[:]
+        res.remove(self.last_tile)
         return res
