@@ -95,11 +95,10 @@ def group_type(tiles: list[str]) -> int:
 
 def dora(gtac: TilesAndCond) -> int:
     """Return sum of every type of dora"""
-    sum = 0
-    for t in gtac.all_tiles:
-        sum += gtac.doras[f'{tile_suit(t)}-{tile_num(t)}']
-        sum += (t[-1] == 'r')
-    return sum
+    # sum = len(gtac.aka_doras)
+    # for t in gtac.all_tiles:
+    #     sum += gtac.doras[f'{tile_suit(t)}-{tile_num(t)}']
+    return gtac.doras
 
 
 def duan_yao_jiu(gtac: TilesAndCond) -> int:
@@ -136,15 +135,15 @@ def men_qing_tsumo(gtac: TilesAndCond) -> int:
 
 @men_qing_only
 def ping_he(gtac: TilesAndCond) -> int:
-    for g in gtac.group_tiles[:-1]:
-        if group_type(g.tiles) != 0:
+    for g in gtac.group_tiles:
+        if group_type(g.tiles) != 0 and group_type(g.tiles) != 3:
             return 0
     yi_pai = {
         gtac.chang_fong,
         gtac.zi_fong,
         'red', 'white', 'green'
     }
-    if tile_num(gtac.eye[0]) not in yi_pai and gtac.ting_count == 2:
+    if tile_num(gtac.eye[0]) not in yi_pai and gtac.ting_cnt == 2:
         return 1
     return 0
 
@@ -188,7 +187,7 @@ def san_gang_zi(gtac: TilesAndCond) -> int:
     for g in gtac.group_tiles:
         if group_type(g.tiles) == 2:
             cnt += 1
-    return (cnt == 3)*2
+    return 2 if cnt == 3 else 0
 
 
 def hun_lao_tou(gtac: TilesAndCond) -> int:
@@ -221,7 +220,7 @@ def san_se_tong_ke(gtac: TilesAndCond) -> int:
             num_cnt[tile_num(g[0])] += 1
     for k, v in num_cnt.items():
         if v >= 3:
-            return 3
+            return 2
     return 0
 
 
@@ -233,7 +232,7 @@ def san_se_tong_shun(gtac: TilesAndCond) -> int:
             types[tile_num(g[0])].add(tile_suit(g[0]))
     for k, v in types.items():
         if len(v)>=3:
-            return 3
+            return 2
     return 0
 
 
@@ -245,7 +244,7 @@ def yi_qi_tong_guan(gtac: TilesAndCond) -> int:
             shun[tile_suit(g[0])].add(tile_num(g[0]))
     for k, v in shun.items():
         if {1, 4, 7}.issubset(v):
-            return 3
+            return 2
     return 0
 
 
@@ -258,8 +257,6 @@ def double_riichi(gtac: TilesAndCond) -> int:
 @men_qing_only
 def riichi(gtac: TilesAndCond) -> int:
     return gtac.is_riichi*1
-
-
 @men_qing_only
 def qi_dui_zi(gtac: TilesAndCond) -> int:
     return 2 if len(gtac.group_tiles) == 7 else 0
@@ -299,7 +296,7 @@ def hun_quan_dai_yao_jiu(gtac: TilesAndCond) -> int:
         if group_type(g) == 3 and is_yao_jiu_pai(g[0]):
             eye_cnt += 1
     if (shun_cnt+ke_cnt) == 4 and shun_cnt > 0 and eye_cnt > 0:
-        return 3
+        return 2
     return 0
 
 
@@ -316,6 +313,8 @@ def er_bei_kou(gtac: TilesAndCond) -> int:
     if yi_bei_kou_cnt >= 2:
         return 3
     return 0
+
+
 
 
 @high_level_yaku(er_bei_kou)
@@ -426,12 +425,10 @@ def lv_yi_se(gtac: TilesAndCond) -> int:
 @men_qing_only
 def si_an_ke_dan_ji(gtac: TilesAndCond) -> int:
     ke_cnt = 0
-    if gtac.ting_count > 1:
-        return 0
     for g, fl in gtac.group_tiles:
         if group_type(g) in {1, 2} and (not fl):
             ke_cnt += 1
-    return 26 if ke_cnt >= 4 else 0
+    return 26 if ke_cnt >= 4 and gtac.ting_cnt == 1 else 0
 
 
 @high_level_yaku(si_an_ke_dan_ji)
@@ -446,20 +443,20 @@ def si_an_ke(gtac: TilesAndCond) -> int:
 
 @men_qing_only
 def guo_shi_wu_shuang_shi_san_mian(gtac: TilesAndCond) -> int:
-    """
-    guo shi wu shuang: 12 single + 1 eye
-    """
-    if gtac.ting_count == 13 and len(gtac.group_tiles) == 13:
-        return 26
+    # guo shi wu shuang: 12 single + 1 eye
+    if len(gtac.group_tiles) == 13:
+        lcnt = 0
+        for t in gtac.all_tiles:
+            if t == gtac.last_tile:
+                lcnt += 1
+        return 26 if lcnt == 2 else 0
     return 0
 
 
 @high_level_yaku(guo_shi_wu_shuang_shi_san_mian)
 @men_qing_only
 def guo_shi_wu_shuang(gtac: TilesAndCond) -> int:
-    """
-    guo shi wu shuang: 12 single + 1 eye
-    """
+    # guo shi wu shuang: 12 single + 1 eye
     if len(gtac.group_tiles) == 13:
         return 13
     return 0
@@ -469,7 +466,7 @@ def guo_shi_wu_shuang(gtac: TilesAndCond) -> int:
 def chun_zheng_jiu_lian_bao_deng(gtac: TilesAndCond) -> int:
     t = tile_suit(gtac.all_tiles[0])
     num = []
-    for x in gtac.all_tiles:
+    for x in gtac.unfull_tiles:
         if tile_suit(x) != t:
             return 0
         num.append(tile_num(x))
@@ -478,7 +475,7 @@ def chun_zheng_jiu_lian_bao_deng(gtac: TilesAndCond) -> int:
     for i in range(2, 9):
         if num.count(i) < 1:
             return 0
-    return 26 if gtac.ting_count == 9 else 0
+    return 26 if tile_suit(gtac.last_tile) == t else 0
 
 
 @high_level_yaku(chun_zheng_jiu_lian_bao_deng)
@@ -495,7 +492,7 @@ def jiu_lian_bao_deng(gtac: TilesAndCond) -> int:
     for i in range(2, 9):
         if num.count(i) < 1:
             return 0
-    return 26
+    return 13
 
 
 def tian_hu(gtac: TilesAndCond) -> int:
@@ -561,17 +558,17 @@ if __name__=='__main__':        # just for test
     import collections
     gtac = TilesAndCond()
     gtac.group_tiles = [
-        TileGroup(['dots-1-n','dots-1-n','dots-1-n'], 0),
-        TileGroup(['honors-west-n','honors-west-n','honors-west-n'], 0),
-        TileGroup(['honors-east-n','honors-east-n','honors-east-n'], 0),
-        TileGroup(['honors-south-n','honors-south-n','honors-south-n'], 0),
-        TileGroup(['honors-north-n','honors-north-n'], 0)
+        TileGroup(['bamboo-2', 'bamboo-3', 'bamboo-4'], 0),
+        TileGroup(['characters-2', 'characters-3', 'characters-4'], 0),
+        TileGroup(['characters-2', 'characters-3', 'characters-4'], 0),
+        TileGroup(['dots-2', 'dots-3', 'dots-4'], 0),
+        TileGroup(['characters-5', 'characters-5'], 0)
     ]
     gtac.free_tiles = []
-    gtac.ting_count = 9
+    gtac.ting_cnt = 1
     gtac.chang_fong = 'east'
     gtac.zi_fong = 'east'
-    gtac.doras = collections.defaultdict(int)
+    #gtac.doras = collections.defaultdict(int)
 
     for i,y in enumerate(yaku_checkers):
         if y(gtac) > 0:

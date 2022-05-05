@@ -1,10 +1,20 @@
 import collections
 from email.policy import default
-#tiles classes En naming reference to https://github.com/Camerash/mahjong-dataset
-#aka dora example: dots-8-r
-#normal example: dots-8-n
+
+TILES =  [f'c-{i}' for i in range(1, 10)]\
+        +[f'd-{i}' for i in range(1, 10)]\
+        +[f'b-{i}' for i in range(1, 10)]\
+        +[f'honors-{i}' for i in ['east','south','west','north','white','green','red']]
+
+TILSE2id = {}
+for i,t in enumerate(TILES):
+    TILSE2id[t] = i
 
 TileGroup = collections.namedtuple('TileGroup','tiles is_fu_lou')
+
+import sys
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 class TilesAndCond:
     def __init__ (self) -> None:
@@ -16,13 +26,14 @@ class TilesAndCond:
         self.free_tiles: list[str] = []
         self.group_tiles: list[TileGroup]  = []     #eye in last
         self.last_tile: str = ''
-        self.ting_count: int = 0
         self.is_tsumo: bool = False
+        self.is_double_riichi: bool = False
+        self.is_riichi: bool = False
         self.chang_fong: str = ''
         self.zi_fong: str = ''      # 'west'
-        self.doras: collections.defaultdict[str,int] = collections.defaultdict(int)      #which dora, count
-        self.is_riichi: bool = False
-        self.is_double_riichi: bool = False
+        #self.doras: collections.defaultdict[str,int] = collections.defaultdict(int)      #which dora, count
+        #self.aka_doras: list[str] = []
+        self.doras: int = 0
         self.is_ippatsu: bool = False
         self.is_chiang_gang: bool = False
         self.is_ling_shang_kai_hua: bool = False
@@ -30,9 +41,13 @@ class TilesAndCond:
         self.is_he_di_lao_yu: bool = False
         self.is_tian_hu: bool = False
         self.is_di_hu: bool = False
-        self.is_qin: bool = False
+        
         self.free_ting: int = 0
-        self.group_ting: int = 0
+        self.ting_cnt: int = 0
+
+    @property
+    def is_qin(self) -> bool:
+        return self.zi_fong == 'east'
 
     @property
     def is_men_qing (self) -> bool:
@@ -65,3 +80,15 @@ class TilesAndCond:
         res = self.all_tiles[:]
         res.remove(self.last_tile)
         return res
+
+    @property
+    def is_full(self) -> bool:
+        return len(self.group_tiles)*3 + len(self.free_tiles) >= 14
+
+    def print_content(self):
+        eprint("\n===TAC Content===")
+        eprint(self.free_tiles)
+        for x in self.group_tiles:
+            eprint(x)
+        eprint(f"group_ting: {self.ting_cnt}")
+
