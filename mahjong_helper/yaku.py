@@ -417,7 +417,7 @@ def lv_yi_se(gtac: TilesAndCond) -> int:
             if tile_num(t) != 'green':
                 return 0
         else:
-            if tile_suit(t) != 'bamboo' or tile_num(t) not in s:
+            if tile_suit(t) != 'b' or tile_num(t) not in s:
                 return 0
     return 13
 
