@@ -1,20 +1,33 @@
 import collections
-from email.policy import default
 
-TILES =  [f'c-{i}' for i in range(1, 10)]\
-        +[f'd-{i}' for i in range(1, 10)]\
-        +[f'b-{i}' for i in range(1, 10)]\
-        +[f'honors-{i}' for i in ['east','south','west','north','white','green','red']]
+from utils import eprint
 
-TILSE2id = {}
+
+HONORS = 'honors'
+GREEN = 'green'
+RED = 'red'
+WHITE = 'white'
+EAST = 'east'
+SOUTH = 'south'
+WEST = 'west'
+NORTH = 'north'
+BAMBOO = 'b'
+CHARACTERS = 'c'
+DOTS = 'd'
+
+
+TILES =  [f'{CHARACTERS}-{i}' for i in range(1, 10)]\
+        +[f'{DOTS}-{i}' for i in range(1, 10)]\
+        +[f'{BAMBOO}-{i}' for i in range(1, 10)]\
+        +[f'{HONORS}-{i}' for i in [EAST,SOUTH,WEST,NORTH,WHITE,GREEN,RED]]
+
+TILSE2ID = {}
 for i,t in enumerate(TILES):
-    TILSE2id[t] = i
+    TILSE2ID[t] = i
+
 
 TileGroup = collections.namedtuple('TileGroup','tiles is_fu_lou')
 
-import sys
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
 
 class TilesAndCond:
     def __init__ (self) -> None:
@@ -47,7 +60,7 @@ class TilesAndCond:
 
     @property
     def is_qin(self) -> bool:
-        return self.zi_fong == 'east'
+        return self.zi_fong == EAST
 
     @property
     def is_men_qing (self) -> bool:
@@ -85,10 +98,14 @@ class TilesAndCond:
     def is_full(self) -> bool:
         return len(self.group_tiles)*3 + len(self.free_tiles) >= 14
 
-    def print_content(self):
+    @property
+    def lack(self) -> int:
+        # kan is count as 3 tiles
+        return 14 - len(self.group_tiles)*3 - len(self.free_tiles)
+
+    def _print_content(self):    # for debugging
         eprint("\n===TAC Content===")
         eprint(self.free_tiles)
         for x in self.group_tiles:
             eprint(x)
         eprint(f"group_ting: {self.ting_cnt}")
-

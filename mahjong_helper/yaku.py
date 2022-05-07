@@ -1,10 +1,7 @@
 from collections import defaultdict
-from posixpath import split
 from typing import Optional
-from tile import TilesAndCond
-from tile import TileGroup
 
-HONORS = 'honors'
+from tile import *
 
 ############## decorators #################
 
@@ -26,9 +23,10 @@ def fu_lou_minus_one(func):
 def high_level_yaku(higher_yaku):
     def deco(func):
         def wrapper(gtac: TilesAndCond):
-            return 0 if higher_yaku(gtac)>0 else func(gtac)
+            return 0 if higher_yaku(gtac) > 0 else func(gtac)
         return wrapper
     return deco
+
 
 ############### helper function ################
 
@@ -56,12 +54,12 @@ def is_yao_jiu_pai(tile: str) -> bool:
 
 
 def is_san_yuan_pai(tile: str) -> bool:
-    s = {'green', 'red', 'white'}
+    s = {GREEN, RED, WHITE}
     return tile_num(tile) in s
 
 
 def is_feng_pai(tile: str) -> bool:
-    s = {'east', 'south', 'west', 'north'}
+    s = {EAST, SOUTH, WEST, NORTH}
     return tile_num(tile) in s
 
 
@@ -75,7 +73,8 @@ def group_type(tiles: list[str]) -> int:
         -1: not either
     """
     tiles = ['-'.join(t.split('-')[0:2]) for t in tiles]
-    if [tile_suit(t) for t in tiles].count(tile_suit(tiles[0])) != len(tiles):      #all type must be same
+    # all type must be same
+    if [tile_suit(t) for t in tiles].count(tile_suit(tiles[0])) != len(tiles):
         return -1
     if tile_suit(tiles[0]) != HONORS and len(tiles) == 3:
         nums = sorted([int(tile_num(t)) for t in tiles])
@@ -90,7 +89,7 @@ def group_type(tiles: list[str]) -> int:
     return -1
 
 
-################ yakus ###############
+################ yaku checkers ###############
 
 
 def dora(gtac: TilesAndCond) -> int:
@@ -141,7 +140,7 @@ def ping_he(gtac: TilesAndCond) -> int:
     yi_pai = {
         gtac.chang_fong,
         gtac.zi_fong,
-        'red', 'white', 'green'
+        RED, WHITE, GREEN
     }
     if tile_num(gtac.eye[0]) not in yi_pai and gtac.ting_cnt == 2:
         return 1
@@ -176,7 +175,7 @@ def xiao_san_yuan(gtac: TilesAndCond) -> int:
     for g in gtac.group_tiles:
         if group_type(g.tiles) in {1, 2} and is_san_yuan_pai(g.tiles[0]):
             ke_cnt += 1
-        if group_type(g.tiles)==3 and is_san_yuan_pai(g.tiles[0]):
+        if group_type(g.tiles) == 3 and is_san_yuan_pai(g.tiles[0]):
             eye_cnt += 1
 
     return 2 if ke_cnt == 2 and eye_cnt == 1 else 0
@@ -231,7 +230,7 @@ def san_se_tong_shun(gtac: TilesAndCond) -> int:
         if group_type(g) == 0 and tile_suit(g[0]) != HONORS:
             types[tile_num(g[0])].add(tile_suit(g[0]))
     for k, v in types.items():
-        if len(v)>=3:
+        if len(v) >= 3:
             return 2
     return 0
 
@@ -257,6 +256,8 @@ def double_riichi(gtac: TilesAndCond) -> int:
 @men_qing_only
 def riichi(gtac: TilesAndCond) -> int:
     return gtac.is_riichi*1
+
+
 @men_qing_only
 def qi_dui_zi(gtac: TilesAndCond) -> int:
     return 2 if len(gtac.group_tiles) == 7 else 0
@@ -315,8 +316,6 @@ def er_bei_kou(gtac: TilesAndCond) -> int:
     return 0
 
 
-
-
 @high_level_yaku(er_bei_kou)
 @men_qing_only
 def yi_bei_kou(gtac: TilesAndCond) -> int:
@@ -368,6 +367,7 @@ def da_si_xi(gtac: TilesAndCond) -> int:
         return 26
     return 0
 
+
 @high_level_yaku(da_si_xi)
 def xiao_si_xi(gtac: TilesAndCond) -> int:
     ke_cnt = 0
@@ -414,10 +414,10 @@ def lv_yi_se(gtac: TilesAndCond) -> int:
     s = {2, 3, 4, 6, 8}
     for t in gtac.all_tiles:
         if tile_suit(t) == HONORS:
-            if tile_num(t) != 'green':
+            if tile_num(t) != GREEN:
                 return 0
         else:
-            if tile_suit(t) != 'b' or tile_num(t) not in s:
+            if tile_suit(t) != BAMBOO or tile_num(t) not in s:
                 return 0
     return 13
 
@@ -506,70 +506,71 @@ def di_hu(gtac: TilesAndCond) -> int:
         return 13
     return 0
 
-yaku_checkers = [
-    dora,duan_yao_jiu,chiang_gang,
-    ling_shang_kai_hua,hai_di_lao_yue,he_di_lao_yu,
-    ippatsu,men_qing_tsumo,ping_he,
-    chang_feng_pai,zi_feng_pai,san_yuan_pai,
-    xiao_san_yuan,san_gang_zi,hun_lao_tou,
-    san_an_ke,dui_dui_he,san_se_tong_ke,
-    san_se_tong_shun,yi_qi_tong_guan,double_riichi,
-    riichi,qi_dui_zi,chun_quan_dai_yao_jiu,
-    hun_quan_dai_yao_jiu,er_bei_kou,yi_bei_kou,
-    qing_yi_se,hun_yi_se,da_si_xi,
-    xiao_si_xi,da_san_yuan,si_gang_zi,
-    qing_lao_tou,zi_yi_se,lv_yi_se,
-    si_an_ke_dan_ji,si_an_ke,guo_shi_wu_shuang_shi_san_mian,
-    guo_shi_wu_shuang,chun_zheng_jiu_lian_bao_deng,jiu_lian_bao_deng,
-    tian_hu,di_hu
+
+YAKU_CHECKERS = [
+    dora, duan_yao_jiu, chiang_gang,
+    ling_shang_kai_hua, hai_di_lao_yue, he_di_lao_yu,
+    ippatsu, men_qing_tsumo, ping_he,
+    chang_feng_pai, zi_feng_pai, san_yuan_pai,
+    xiao_san_yuan, san_gang_zi, hun_lao_tou,
+    san_an_ke, dui_dui_he, san_se_tong_ke,
+    san_se_tong_shun, yi_qi_tong_guan, double_riichi,
+    riichi, qi_dui_zi, chun_quan_dai_yao_jiu,
+    hun_quan_dai_yao_jiu, er_bei_kou, yi_bei_kou,
+    qing_yi_se, hun_yi_se, da_si_xi,
+    xiao_si_xi, da_san_yuan, si_gang_zi,
+    qing_lao_tou, zi_yi_se, lv_yi_se,
+    si_an_ke_dan_ji, si_an_ke, guo_shi_wu_shuang_shi_san_mian,
+    guo_shi_wu_shuang, chun_zheng_jiu_lian_bao_deng, jiu_lian_bao_deng,
+    tian_hu, di_hu
 ]
-yaku_names = [
-    'dora','duan_yao_jiu','chiang_gang'
-    ,'ling_shang_kai_hua','hai_di_lao_yue','he_di_lao_yu',
-    'ippatsu','men_qing_tsumo','ping_he',
-    'chang_feng_pai','zi_feng_pai','san_yuan_pai',
-    'xiao_san_yuan','san_gang_zi','hun_lao_tou',
-    'san_an_ke','dui_dui_he','san_se_tong_ke',
-    'san_se_tong_shun','yi_qi_tong_guan','double_riichi'
-    ,'riichi','qi_dui_zi','chun_quan_dai_yao_jiu',
-    'hun_quan_dai_yao_jiu','er_bei_kou','yi_bei_kou',
-    'qing_yi_se','hun_yi_se','da_si_xi',
-    'xiao_si_xi','da_san_yuan','si_gang_zi',
-    'qing_lao_tou','zi_yi_se','lv_yi_se',
-    'si_an_ke_dan_ji','si_an_ke','guo_shi_wu_shuang_shi_san_mian',
-    'guo_shi_wu_shuang','chun_zheng_jiu_lian_bao_deng','jiu_lian_bao_deng',
-    'tian_hu','di_hu'
+YAKU_NAMES = [
+    'dora', 'duan_yao_jiu', 'chiang_gang',
+    'ling_shang_kai_hua', 'hai_di_lao_yue', 'he_di_lao_yu',
+    'ippatsu', 'men_qing_tsumo', 'ping_he',
+    'chang_feng_pai', 'zi_feng_pai', 'san_yuan_pai',
+    'xiao_san_yuan', 'san_gang_zi', 'hun_lao_tou',
+    'san_an_ke', 'dui_dui_he', 'san_se_tong_ke',
+    'san_se_tong_shun', 'yi_qi_tong_guan', 'double_riichi',
+    'riichi', 'qi_dui_zi', 'chun_quan_dai_yao_jiu',
+    'hun_quan_dai_yao_jiu', 'er_bei_kou', 'yi_bei_kou',
+    'qing_yi_se', 'hun_yi_se', 'da_si_xi',
+    'xiao_si_xi', 'da_san_yuan', 'si_gang_zi',
+    'qing_lao_tou', 'zi_yi_se', 'lv_yi_se',
+    'si_an_ke_dan_ji', 'si_an_ke', 'guo_shi_wu_shuang_shi_san_mian',
+    'guo_shi_wu_shuang', 'chun_zheng_jiu_lian_bao_deng', 'jiu_lian_bao_deng',
+    'tian_hu', 'di_hu'
 ]
 
-yaku_name2id = {}
-for i,y in enumerate(yaku_names):
-    yaku_name2id[y] = i
+YAKU_NAME2ID = {}
+for i, y in enumerate(YAKU_NAMES):
+    YAKU_NAME2ID[y] = i
 
-yakumans = {
-    'da_si_xi','xiao_si_xi','da_san_yuan',
-    'si_gang_zi','qing_lao_tou','zi_yi_se',
-    'lv_yi_se','si_an_ke_dan_ji','si_an_ke',
-    'guo_shi_wu_shuang_shi_san_mian','guo_shi_wu_shuang',
-    'chun_zheng_jiu_lian_bao_deng','jiu_lian_bao_deng',
-    'tian_hu','di_hu'
+YAKUMANS = {
+    'da_si_xi', 'xiao_si_xi', 'da_san_yuan',
+    'si_gang_zi', 'qing_lao_tou', 'zi_yi_se',
+    'lv_yi_se', 'si_an_ke_dan_ji', 'si_an_ke',
+    'guo_shi_wu_shuang_shi_san_mian', 'guo_shi_wu_shuang',
+    'chun_zheng_jiu_lian_bao_deng', 'jiu_lian_bao_deng',
+    'tian_hu', 'di_hu'
 }
 
-if __name__=='__main__':        # just for test
-    import collections
-    gtac = TilesAndCond()
-    gtac.group_tiles = [
-        TileGroup(['bamboo-2', 'bamboo-3', 'bamboo-4'], 0),
-        TileGroup(['characters-2', 'characters-3', 'characters-4'], 0),
-        TileGroup(['characters-2', 'characters-3', 'characters-4'], 0),
-        TileGroup(['dots-2', 'dots-3', 'dots-4'], 0),
-        TileGroup(['characters-5', 'characters-5'], 0)
-    ]
-    gtac.free_tiles = []
-    gtac.ting_cnt = 1
-    gtac.chang_fong = 'east'
-    gtac.zi_fong = 'east'
-    #gtac.doras = collections.defaultdict(int)
+# if __name__=='__main__':        # just for test
+#     import collections
+#     gtac = TilesAndCond()
+#     gtac.group_tiles = [
+#         TileGroup(['bamboo-2', 'bamboo-3', 'bamboo-4'], 0),
+#         TileGroup(['characters-2', 'characters-3', 'characters-4'], 0),
+#         TileGroup(['characters-2', 'characters-3', 'characters-4'], 0),
+#         TileGroup(['dots-2', 'dots-3', 'dots-4'], 0),
+#         TileGroup(['characters-5', 'characters-5'], 0)
+#     ]
+#     gtac.free_tiles = []
+#     gtac.ting_cnt = 1
+#     gtac.chang_fong = 'east'
+#     gtac.zi_fong = 'east'
+#     #gtac.doras = collections.defaultdict(int)
 
-    for i,y in enumerate(yaku_checkers):
-        if y(gtac) > 0:
-            print(f'{yaku_names[i]}: {y(gtac)}')
+#     for i,y in enumerate(yaku_checkers):
+#         if y(gtac) > 0:
+#             print(f'{yaku_names[i]}: {y(gtac)}')

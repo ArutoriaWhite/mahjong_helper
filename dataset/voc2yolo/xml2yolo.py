@@ -24,7 +24,7 @@ def yolo_to_xml_bbox(bbox, w, h):
     return [xmin, ymin, xmax, ymax]
 
 
-classes = ['c-1','c-2','c-3','c-4','c-5','c-6','c-7','c-8','c-9','d-1','d-2','d-3','d-4','d-5','d-6','d-7','d-8','d-9','b-1','b-2','b-3','b-4','b-5','b-6','b-7','b-8','b-9','honors-east','honors-south','honors-west','honors-north','honors-white','honors-red','honors-green']
+classes = ['c-1','c-2','c-3','c-4','c-5','c-6','c-7','c-8','c-9','d-1','d-2','d-3','d-4','d-5','d-6','d-7','d-8','d-9','b-1','b-2','b-3','b-4','b-5','b-6','b-7','b-8','b-9','honors-east','honors-south','honors-west','honors-north','honors-white','honors-red','honors-green','c-w']
 input_dir = "annotations/"
 output_dir = "labels/"
 image_dir = "images/"
@@ -70,4 +70,4 @@ for fil in files:
 
 # generate the classes file as reference
 with open('classes.txt', 'w', encoding='utf8') as f:
-    f.write(json.dumps(classes))
+    f.write('\n'.join(classes))

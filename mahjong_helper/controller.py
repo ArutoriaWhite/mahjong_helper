@@ -1,15 +1,19 @@
 import os
-from copy import deepcopy
 import tkinter as tk
+from copy import deepcopy
+from typing import Callable
+
 import ttkbootstrap as ttk
 from PIL import Image, ImageTk
 
-from tile import TilesAndCond, TileGroup, TILES, TILSE2id
-from view import View
-import yaku
 import points
+import yaku
+from tile import *
+from view import View
 
-CH2EN = {'東':'east', '西':'west', '南':'south', '北':'north'}
+
+CH2EN = {'東': 'east', '西': 'west', '南': 'south', '北': 'north'}
+
 
 class Controller:
 
@@ -17,43 +21,42 @@ class Controller:
         self.tac: TilesAndCond = TilesAndCond()
         self.view: View = View(self)
 
-        self.tile_handler = []
-        for t in TILES:
-            def handler_fac(pt):
+        self.add_tile_btn_handler: list[Callable] = []
+        for tile_of_btn in TILES:
+            def handler_fac(t):
                 def handler():      # add a group if any call-tile-mode is on, else add free tile)
-                    # print(self.tac.group_tiles)
-                    # print(self.tac.free_tiles)                    
-                    mode = self.view.tile_inp_mode.get()
+                    mode = self.view.add_tile_mode.get()
                     need_update_display = 0
 
-                    if not self.tac.is_full:
-                        if mode == 0:       
-                            self.tac.free_tiles.append(pt)
-                            need_update_display = 1          
-                    
-                    if 14 - len(self.tac.group_tiles)*3 - len(self.tac.free_tiles) >= 3:
+                    if self.tac.lack >= 0:
+                        if mode == 0:
+                            self.tac.free_tiles.append(t)
+                            need_update_display = 1
+                    if self.tac.lack >= 3:
                         if mode == 1:   # chi
-                            if yaku.tile_suit != 'honors' and int(yaku.tile_num(pt))<=7:
-                                t2 = f'{yaku.tile_suit(pt)}-{int(yaku.tile_num(pt))+1}'
-                                t3 = f'{yaku.tile_suit(pt)}-{int(yaku.tile_num(pt))+2}'
-                                self.tac.group_tiles.append(TileGroup([pt,t2,t3],1))
+                            if yaku.tile_suit != HONORS and int(yaku.tile_num(t)) <= 7:
+                                t2 = f'{yaku.tile_suit(t)}-{int(yaku.tile_num(t))+1}'
+                                t3 = f'{yaku.tile_suit(t)}-{int(yaku.tile_num(t))+2}'
+                                self.tac.group_tiles.append(TileGroup([t, t2, t3], 1))
                         if mode == 2:   # pong
-                            self.tac.group_tiles.append(TileGroup([pt,pt,pt],1))
+                            self.tac.group_tiles.append(TileGroup([t, t, t], 1))
                         if mode == 3:   # gang
-                            self.tac.group_tiles.append(TileGroup([pt,pt,pt,pt],1))
+                            self.tac.group_tiles.append(TileGroup([t, t, t, t], 1))
                         if mode == 4:
-                            self.tac.group_tiles.append(TileGroup([pt,pt,pt,pt],0))
+                            self.tac.group_tiles.append(TileGroup([t, t, t, t], 0))
                         need_update_display = 1
-                    
                     if need_update_display:
                         self.update_tile_display()
+                    pass
 
                 return handler
-            self.tile_handler.append(handler_fac(t))
 
-    def calc_handler(self):     # pass a, start calculating
-        lack = 14-len(self.tac.group_tiles)*3-len(self.tac.free_tiles)
-        if lack > 1: return
+            self.add_tile_btn_handler.append(handler_fac(tile_of_btn))
+
+    def calc_btn_handler(self):
+        self.view.clear_result_display()
+        if self.tac.lack > 1:
+            return
 
         self.tac.last_tile = self.tac.free_tiles[-1]
         self.tac.is_tsumo = self.view.is_tsumo.get()
@@ -70,52 +73,44 @@ class Controller:
         self.tac.is_tian_hu = self.view.is_tian_hu.get()
         self.tac.is_di_hu = self.view.is_di_hu.get()
 
-        if lack == 0:
+        if self.tac.lack == 0:
             self.view.display_result(points.highest_point(self.tac))
-        if lack == 1:
-            res, last_tile =  points.highest_ting_points(self.tac)
+        if self.tac.lack == 1:
+            res, last_tile = points.find_last_tile(self.tac)
             if res.basic > 0:
                 self.view.display_result(res)
-                tid = TILSE2id[last_tile]
-                self.view.display_single_tile(tid, self.tile_handler[tid], 17, ttk.INFO)
+                tid = TILSE2ID[last_tile]
+                self.view.display_single_tile(
+                    tid, self.add_tile_btn_handler[tid], 17, ttk.INFO)
                 self.tac.free_tiles.append(last_tile)
 
-    def upload_handler(self):
+    def upload_img_btn_handler(self):   # this functions is not implemented
         pass
 
     def update_tile_display(self):
-        pass
-        def ghandler_fac(j):
+        def group_handler_fac(j):
             def handler():
                 self.tac.group_tiles.pop(j)
                 self.update_tile_display()
             return handler
 
-        def shandler_fac(j):
+        def single_handler_fac(j):
             def handler():
                 self.tac.free_tiles.pop(j)
                 self.update_tile_display()
             return handler
 
-        self.view.clear_display()
-        for i,g in enumerate(self.tac.group_tiles):
-            tile_id = [TILSE2id[t] for t in g.tiles]
-            self.view.display_group_tile(tile_id, ghandler_fac(i))
-        for i,t in enumerate(self.tac.free_tiles):
-            self.view.display_single_tile(TILSE2id[t], shandler_fac(i))
-
+        self.view.clear_tile_display()
+        for i, g in enumerate(self.tac.group_tiles):
+            tile_id = [TILSE2ID[t] for t in g.tiles]
+            self.view.display_group_tile(tile_id, group_handler_fac(i))
+        for i, t in enumerate(self.tac.free_tiles):
+            self.view.display_single_tile(TILSE2ID[t], single_handler_fac(i))
 
     def runApp(self):
         self.view.setup_ui()
         self.view.root.mainloop()
 
-    # 所有按鈕會對應到特定的牌 or group
-    # 所有按鈕會有對應到 tile id or group id
-    # 所有按鈕會需要知道他是 tile 或 group
-    # 當按下按鈕：發送 command，執行含有 id 的
-    # 當刪除一個之後
-    # 1. 全部重新渲染（移除按鈕們, 從陣列裡移除，重新製造按鈕們）
-    # 2. 把後面的重新渲染
 
 if __name__ == '__main__':
     ctrl = Controller()

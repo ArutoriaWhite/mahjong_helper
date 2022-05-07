@@ -1,16 +1,10 @@
 import math
-import sys
 from collections import defaultdict, namedtuple
 from copy import deepcopy
 from typing import Optional
-from xml.dom import HierarchyRequestErr
 
 import yaku
-from tile import TileGroup, TilesAndCond, TILES
-
-
-def eprint(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
+from tile import *
 
 
 def calc_fu(gtac: TilesAndCond) -> int:
@@ -58,7 +52,7 @@ def calc_fu(gtac: TilesAndCond) -> int:
 
 def calc_fan(gtac: TilesAndCond) -> tuple[int, list[tuple[int, str]]]:
     """
-    Return (fan, [(fan_1,yaku_name_1), (fan_2,yaku_name_2), ...]
+    Return (total_fan, [(fan_1,yaku_name_1), (fan_2,yaku_name_2), ...]
 
     Return (0,[]) if no yaku
     """
@@ -66,16 +60,16 @@ def calc_fan(gtac: TilesAndCond) -> tuple[int, list[tuple[int, str]]]:
     normals: list[tuple[int, str]] = []
     dora = 0
 
-    for i, y in enumerate(yaku.yaku_checkers):
+    for i, y in enumerate(yaku.YAKU_CHECKERS):
         f = y(gtac)
         if f <= 0:
             continue
-        if yaku.yaku_names[i] == 'dora':
+        if yaku.YAKU_NAMES[i] == 'dora':
             dora += f
-        elif yaku.yaku_names[i] in yaku.yakumans:
-            yakumans.append((f, yaku.yaku_names[i]))
+        elif yaku.YAKU_NAMES[i] in yaku.YAKUMANS:
+            yakumans.append((f, yaku.YAKU_NAMES[i]))
         else:
-            normals.append((f, yaku.yaku_names[i]))
+            normals.append((f, yaku.YAKU_NAMES[i]))
 
     if len(yakumans) > 0:
         return (sum([f for f, y in yakumans]), yakumans)
@@ -88,6 +82,7 @@ def calc_fan(gtac: TilesAndCond) -> tuple[int, list[tuple[int, str]]]:
 
 def calc_basic(fan: int, fu: int) -> int:
     """fan must be > 0"""
+    assert(fan > 0)
     fan_level = [5, 7, 10, 12]
     fan2points = [min(fu*(2**(fan+2)), 2000), 3000, 4000, 6000]
 
@@ -105,11 +100,6 @@ RonResult = namedtuple('RonResult', 'basic ron tsumo fan fu yakus')
 
 
 def grouped_tile_points(gtac: TilesAndCond) -> RonResult:
-    """
-    Return (basic, ron, tsumo, fan, fu, [(fan_1,yaku_name_1), (fan_2,yaku_name_2), ...])
-
-    Return (0, 0, 0, 0, 0, []) if no yaku
-    """
     fan, yakus = calc_fan(gtac)
     fu = calc_fu(gtac)
     b = calc_basic(fan, fu)
@@ -153,9 +143,6 @@ def get_shun_from_last(ugtac: TilesAndCond) -> Optional[TilesAndCond]:
             shun_pos.append(j)
             i += 1
 
-    # eprint(ft)
-    # eprint(shun_pos)
-
     if len(shun_pos) == 3:
         newtac = deepcopy(ugtac)
         newtac.group_tiles.append(TileGroup([], 0))
@@ -182,7 +169,7 @@ def get_ke_from_last(ugtac: TilesAndCond) -> Optional[TilesAndCond]:
     return None
 
 
-def calc_group_ting(ugtac: TilesAndCond) -> set[int]:
+def calc_grouped_ting_cnt(ugtac: TilesAndCond) -> set[int]:
     # 對於一組分組方法，遍歷每個沒有副漏（除了暗槓）＆＆含有最後一張牌的組，檢查組內牌型，聽牌數取小的
     res: set[int] = set()
     for g, fl in ugtac.group_tiles:
@@ -207,7 +194,7 @@ def calc_group_ting(ugtac: TilesAndCond) -> set[int]:
     return res
 
 
-def normal_grouped_way(ugtac: TilesAndCond, res: list[TilesAndCond]):
+def group_normally(ugtac: TilesAndCond, res: list[TilesAndCond]):
     ft = ugtac.free_tiles
     ft.sort(reverse=True)
 
@@ -241,7 +228,7 @@ def normal_grouped_way(ugtac: TilesAndCond, res: list[TilesAndCond]):
             dfs(newtac, ways)
             for w in ways:
                 w.group_tiles.append(eye)
-                for tcnt in calc_group_ting(w):
+                for tcnt in calc_grouped_ting_cnt(w):
                     way_with_different_tcnt = deepcopy(w)
                     way_with_different_tcnt.ting_cnt = tcnt
                     ress.add(way_with_different_tcnt)
@@ -269,12 +256,12 @@ def group_guo_shi_wu_shuang(ugtac: TilesAndCond, res: list[TilesAndCond]):
     # 13 group
     # 是否是國士
     # 是國士：iterator sorted free tiles, put into newtac grouped
-    guo_shi = {
-        'd-1', 'd-9', 'b-1', 'b-9', 'c-1', 'c-9',
-        'honors-east', 'honors-south', 'honors-west', 'honors-north',
-        'honors-red', 'honors-green', 'honors-white'
+    GUO_SHI = {
+        f'{DOTS}-1', f'{DOTS}-9', f'{BAMBOO}-1', f'{BAMBOO}-9', f'{CHARACTERS}-1', f'{CHARACTERS}-9',
+        f'{HONORS}-{EAST}', f'{HONORS}-{SOUTH}', f'{HONORS}-{WEST}', f'{HONORS}-{NORTH}',
+        f'{HONORS}-{RED}', f'{HONORS}-{GREEN}', f'{HONORS}-{WHITE}',
     }
-    if set(ugtac.all_tiles) != guo_shi:
+    if set(ugtac.all_tiles) != GUO_SHI:
         return
     newtac = deepcopy(ugtac)
     while len(newtac.free_tiles) > 0:
@@ -290,7 +277,7 @@ def highest_point(ungrouped_14_tac: TilesAndCond) -> RonResult:
     may not in win pattern, but it's ready to win
     """
     ways: list[TilesAndCond] = list()
-    normal_grouped_way(ungrouped_14_tac, ways)
+    group_normally(ungrouped_14_tac, ways)
     group_qi_dui_zi(ungrouped_14_tac, ways)
     group_guo_shi_wu_shuang(ungrouped_14_tac, ways)
 
@@ -301,7 +288,8 @@ def highest_point(ungrouped_14_tac: TilesAndCond) -> RonResult:
             res = ron
     return res
 
-def highest_ting_points(ungroup_13_tac: TilesAndCond) -> tuple[RonResult,str]:
+
+def find_last_tile(ungroup_13_tac: TilesAndCond) -> tuple[RonResult, str]:
     res = RonResult(0, 0, 0, 0, 0, [])
     last_tile = ''
     for t in TILES:
@@ -315,38 +303,37 @@ def highest_ting_points(ungroup_13_tac: TilesAndCond) -> tuple[RonResult,str]:
     return (res, last_tile)
 
 
+# if __name__ == '__main__':        # testing ouob
+#     gtac = TilesAndCond()
+#     gtac.free_tiles = [
+#         f'{CHARACTERS}-9', f'{CHARACTERS}-9',
+#         '-white', 'honors-white', 'honors-white',
+#         'honors-red', 'honors-red', 'honors-red',
+#     ]
+#     gtac.group_tiles = [
+#         TileGroup(['b-3', 'b-4', 'b-5'], 1),
+#         TileGroup(['honors-green', 'honors-green', 'honors-green'], 1)
+#     ]
+#     gtac.last_tile = 'honors-red'
+#     gtac.is_tsumo = False
+#     gtac.is_ippatsu = False
+#     gtac.is_riichi = False
+#     #gtac.doras['honors-north'] = 1
+#     #gtac.aka_doras = []
+#     gtac.chang_fong = 'east'
+#     gtac.zi_fong = 'east'
 
-if __name__ == '__main__':        # testing ouob
-    gtac = TilesAndCond()
-    gtac.free_tiles = [
-        'c-9', 'c-9',
-        'honors-white', 'honors-white', 'honors-white',
-        'honors-red', 'honors-red', 'honors-red',
-    ]
-    gtac.group_tiles = [
-        TileGroup(['b-3', 'b-4', 'b-5'], 1),
-        TileGroup(['honors-green', 'honors-green', 'honors-green'], 1)
-    ]
-    gtac.last_tile = 'honors-red'
-    gtac.is_tsumo = False
-    gtac.is_ippatsu = False
-    gtac.is_riichi = False
-    #gtac.doras['honors-north'] = 1
-    #gtac.aka_doras = []
-    gtac.chang_fong = 'east'
-    gtac.zi_fong = 'east'
+#     gtac.free_tiles.sort(reverse=True)
+#     # res = get_shun_from_last(gtac)
+#     # if res:
+#     #     res.print_content()
+#     # else:
+#     #     eprint('none')
 
-    gtac.free_tiles.sort(reverse=True)
-    # res = get_shun_from_last(gtac)
-    # if res:
-    #     res.print_content()
-    # else:
-    #     eprint('none')
-
-    res: list[TilesAndCond] = []
-    normal_grouped_way(gtac, res)
-    group_guo_shi_wu_shuang(gtac, res)
-    group_qi_dui_zi(gtac, res)
-    for r in res:
-        r.print_content()
-        print(grouped_tile_points(r))
+#     res: list[TilesAndCond] = []
+#     normal_grouped_way(gtac, res)
+#     group_guo_shi_wu_shuang(gtac, res)
+#     group_qi_dui_zi(gtac, res)
+#     for r in res:
+#         r._print_content()
+#         print(grouped_tile_points(r))
