@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Optional
 
-from tile import *
+from .tile import *
 
 ############## decorators #################
 

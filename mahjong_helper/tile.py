@@ -1,6 +1,6 @@
 import collections
 
-from utils import eprint
+from .utils import eprint
 
 
 HONORS = 'honors'

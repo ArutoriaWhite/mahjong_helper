@@ -3,8 +3,8 @@ from collections import defaultdict, namedtuple
 from copy import deepcopy
 from typing import Optional
 
-import yaku
-from tile import *
+from . import yaku
+from .tile import *
 
 
 def calc_fu(gtac: TilesAndCond) -> int:

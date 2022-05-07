@@ -6,10 +6,10 @@ from typing import Callable
 import ttkbootstrap as ttk
 from PIL import Image, ImageTk
 
-import points
-import yaku
-from tile import *
-from view import View
+from . import points
+from . import yaku
+from .tile import *
+from .view import View
 
 
 CH2EN = {'東': 'east', '西': 'west', '南': 'south', '北': 'north'}

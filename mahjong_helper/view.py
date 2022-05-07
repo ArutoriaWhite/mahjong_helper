@@ -6,9 +6,9 @@ from typing import Callable
 import ttkbootstrap as ttk
 from PIL import Image, ImageTk
 
-from points import RonResult
-from tile import *
-from yaku import YAKU_NAME2ID
+from .points import RonResult
+from .tile import *
+from .yaku import YAKU_NAME2ID
 
 #from controller import Controller
 
